@@ -26,22 +26,7 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 ----------------------------------------------------------------
 ----------------------------------------------------------------
-task.spawn(function()
-    task.wait(1)
-    local execMsg = "✌🏻 ☠️ AG_HAMID1 SPAM ACTIVATED ⚠️ MADE BY HAMIDHERE 😎 🏴(AG ON TOP) 🔥"
-    local border = "(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)(!)"
-    local fullExecMessage = border .. "\n" .. execMsg .. "\n" .. border
-
-    local chatEvent = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
-    if chatEvent and chatEvent:FindFirstChild("SayMessageRequest") then
-        chatEvent.SayMessageRequest:FireServer(fullExecMessage, "All")
-    else
-        local textChannel = game:GetService("TextChatService").TextChannels:FindFirstChild("RBXGeneral")
-        if textChannel then
-            textChannel:SendAsync(fullExecMessage)
-        end
-    end
-end)
+-- Startup chat message removed: this version does not send chat messages.
 
 ----------------------------------------------------------------
 -- 1. INTRO SCREEN (WITH NEW MESSAGE ✨)
@@ -184,7 +169,7 @@ OwnerText.Parent = OwnerPanel
 local function animateUIOpen()
     MainFrame.Visible = true
     MainFrame.Size = UDim2.new(0, 0, 0, 0)
-    TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 480, 0, 460)}):Play()
+    TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 480, 0, 490)}):Play()
 end
 
 local function animateUIClose()
@@ -419,175 +404,66 @@ FlowerBtn.MouseButton1Click:Connect(function()
 end)
 
 ----------------------------------------------------------------
--- 6. SPAMMER LOGIC & MESSAGES 
+-- 6. LOCAL PREVIEW CONTROLS (NO CHAT MESSAGES ARE SENT)
 ----------------------------------------------------------------
-local isSpamming = false
-local sentCount = 0
-local burstCount = 0
+local isPreviewRunning = false
+local previewCount = 0
+local previewMessages = {
+    "HAMID V2 BY HAMIDHERE",
+    "Custom message preview",
+    "Preview is running locally",
+    "Press STOP to pause the preview"
+}
+
+local PreviewLabel = Instance.new("TextLabel")
+PreviewLabel.Size = UDim2.new(0, 440, 0, 36)
+PreviewLabel.Position = UDim2.new(0, 20, 0, 450)
+PreviewLabel.BackgroundColor3 = Color3.fromRGB(35, 15, 20)
+PreviewLabel.BorderSizePixel = 0
+PreviewLabel.Font = Enum.Font.Gotham
+PreviewLabel.Text = "Preview: waiting"
+PreviewLabel.TextColor3 = Color3.fromRGB(255, 210, 210)
+PreviewLabel.TextSize = 12
+PreviewLabel.TextWrapped = true
+PreviewLabel.Parent = MainFrame
+
+local PreviewCorner = Instance.new("UICorner")
+PreviewCorner.CornerRadius = UDim.new(0, 6)
+PreviewCorner.Parent = PreviewLabel
 
 ToggleBtn.MouseButton1Click:Connect(function()
-    isSpamming = not isSpamming
-    if isSpamming then
-        sentCount = 0
-        burstCount = 0
+    isPreviewRunning = not isPreviewRunning
+
+    if isPreviewRunning then
         ToggleBtn.Text = "STOP"
         ToggleBtn.BackgroundColor3 = Color3.fromRGB(100, 15, 25)
-        StatusLabel.Text = "Status: Running 🟢"
+        StatusLabel.Text = "Status: Preview running 🟢"
         StatusLabel.TextColor3 = Color3.fromRGB(74, 222, 128)
+
+        task.spawn(function()
+            while isPreviewRunning do
+                previewCount += 1
+                local baseMessage = previewMessages[((previewCount - 1) % #previewMessages) + 1]
+                local customText = string.match(CustomMsgBox.Text, "^%s*(.-)%s*$")
+                if customText and customText ~= "" then
+                    PreviewLabel.Text = "Preview " .. previewCount .. ": " .. customText .. " | " .. baseMessage
+                else
+                    PreviewLabel.Text = "Preview " .. previewCount .. ": " .. baseMessage
+                end
+
+                local delaySeconds = tonumber(DelayBox.Text) or 2.4
+                delaySeconds = math.clamp(delaySeconds, 0.5, 30)
+                if isBurstMode then
+                    delaySeconds = math.max(delaySeconds, 1)
+                end
+                task.wait(delaySeconds)
+            end
+        end)
     else
         ToggleBtn.Text = "START"
         ToggleBtn.BackgroundColor3 = Color3.fromRGB(220, 20, 60)
         StatusLabel.Text = "Status: Stopped 🔴"
         StatusLabel.TextColor3 = Color3.fromRGB(239, 68, 68)
-    end
-end)
-
-local patterns = {
-    "HAMID V2 BY HAMIDHERE",
-    "o_O|o_O|o_O|o_O|o_O|o_O|o_O|o_O|",
-    "- _ - _ - _ - _ - _ - _ - _ - _ - _ - _",
-    "______________________________________",
-    "--------------------------------------",
-    "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
-}
-
-local toxicMsg = "🔮☄️ tmx MAI AG KA HAMID🖤 BOLO HAMID PAPA ON TOP🤩"
-
-local messages = {
-    toxicMsg, 
-    "🔥✨ tmx GODZILA POWER SONIC BEEM UNLEASHED 100% MAXIMUM DESTRUCTION OVERLOAD 🔥✨",
-    "😝☄️ tmx SUPER ULTRA BRAZIL TIGER GORILLA PUNCH COMING THROUGH WITH UNSTOPPABLE JUNGLE FURY RAGE 😝☄️",
-    "✨☀️ tmx SUPER MEGA POWER WAVE TSUNAMI BLAST ACTIVATED ACROSS THE ENTIRE SERVER DIMENSION ✨☀️",
-    "🔥👾 tmx ULTIMATE BEAST MODE ACTIVATED: GODZILA ROAR COMBINED WITH TIGER SPEED AND GORILLA SMASH 🔥👾",
-    "☀️☄️ tmx ULTIMATE SONIC BEEM DESTRUCTION RAY BURNING DOWN EVERYTHING IN SIGHT ☀️☄️",
-    "🔮😝 tmx BRAZIL TIGER HYPER DRIFT KICK MEETS GORILLA EARTHQUAKE SMASH COMBO OF DOOM 🔮😝",
-    "✨🔥 tmx MEGA POWER WAVE IS OVERWHELMING THE ENTIRE SERVER WITH TIDAL WAVE TSUNAMI ENERGY ✨🔥",
-    "👾🎍 tmx WARNING: GODZILA POWER IS COMPLETELY UNSTOPPABLE IN THE CHAT ROOM RIGHT NOW 👾🎍",
-    toxicMsg, 
-    "🔥😝 tmx GORILLA PUNCH EARTHQUAKE SHAKE CAUSING MASSIVE DAMAGE EVERYWHERE 🔥😝",
-    "✨🎐 tmx SONIC BEEM CHARGING UP TO MAXIMUM OVERDRIVE POWER LEVEL INFINITE LIGHTNING SPEED ✨🎐",
-    "☀️👾 tmx BRAZIL TIGER JUNGLE FURY SAVAGE ATTACK SWEEPING AWAY ALL OPPONENTS IN THE ARENA ☀️👾",
-    "🔮☄️ tmx MEGA POWER WAVE WASHING AWAY EVERY SINGLE PLAYER WITH AN OCEANIC TSUNAMI STORM 🔮☄️",
-    "🔥✨ tmx GODZILA ATOMIC BREATH READY TO FIRE ACROSS THE SKIES BRINGING TOTAL ANNIHILATION 🔥✨",
-    "😝☀️ tmx ULTRA SUPER SAIYAN GORILLA RAGE UNLEASHED WITH PRIMAL INSTINCT 😝☀️",
-    "🎐🔮 tmx SONIC BEEM SPEED OF LIGHT BEATDOWN LEAVING ONLY ELECTRIC SPARKS IN THE AIR 🎐🔮",
-    "☄️👾 tmx BRAZIL TIGER CLAW SLASH OF DOOM CUTTING THROUGH DIMENSIONS WITH HYPER PRECISION ☄️👾",
-    "✨🔥 tmx SUPER MEGA POWER WAVE TSUNAMI STORM CRASHING INTO THE MAIN GATES WITH FORCE ✨🔥",
-    toxicMsg, 
-    "😝🎐 tmx GODZILA VS GORILLA ULTIMATE CLASH OF THE TITANS BATTLE OF THE CENTURY 😝🎐",
-    "🔥🔮 tmx SONIC BEEM THUNDERSTORM STRIKE SHATTERING THE SOUND BARRIER 🔥🔮",
-    "🎍✨ tmx BRAZIL TIGER HYPER DRIFT KICK DRIFTING ACROSS THE MAP AT LIGHTNING SPEED 🎍✨",
-    "☀️☄️ tmx MEGA POWER WAVE MAXIMUM OVERDRIVE TIDAL WAVE ENERGY SURGE ACTIVATED ☀️☄️",
-    "🔥👾 tmx ULTIMATE GODZILA TAIL WHIP DESTRUCTION LEVEL 9999 ACTIVATED IN THE SECTOR 🔥👾",
-    "✨🎐 tmx GORILLA CHEST BEAT SOUNDWAVE BLAST SHAKING THE FOUNDATIONS OF THE EARTH ✨🎐",
-    "☀️☄️ tmx SONIC BEEM HYPER LASER BEAM MELTING EVERYTHING IN ITS PATH ☀️☄️",
-    "👾🔥 tmx BRAZIL TIGER SAVAGE BITE ATTACK OF THE JUNGLE KINGDOM LORDS 👾🔥",
-    "🎐🎍 tmx SUPER MEGA POWER WAVE OCEAN CRASH TIDAL WAVE DELUGE SWEEPING THE MAP CLEAN 🎐🎍",
-    toxicMsg, 
-    "😝🔮 tmx GODZILA KING OF THE MONSTERS ROAR ECHOING ACROSS THE ENTIRE UNIVERSE 😝🔮",
-    "🔥👾 tmx GORILLA SMASH GROUND ZERO IMPACT CRATER CREATION PROTOCOL ONLINE 🔥👾",
-    "☀️🎐 tmx SONIC BEEM LIGHTNING SPEED DASH ACROSS ALL SERVERS ☀️🎐",
-    "🔮😝 tmx BRAZIL TIGER JUNGLE KING DOMINATION REIGNING SUPREME OVER EVERYONE 🔮😝",
-    "✨☄️ tmx MEGA POWER WAVE TIDAL WAVE ONSLAUGHT SWEEPING AWAY ALL DEFENSES ✨☄️",
-    "🔥👾 tmx ULTIMATE GODZILA HEAT RAY MELTDOWN CAUSING VOLCANIC ERUPTIONS EVERYWHERE 🔥👾",
-    "🔥✨ tmx GODZILA POWER SONIC BEEM UNLEASHED 100% MAXIMUM DESTRUCTION OVERLOAD 🔥✨",
-    "😝☄️ tmx SUPER ULTRA BRAZIL TIGER GORILLA PUNCH COMING THROUGH WITH UNSTOPPABLE JUNGLE FURY RAGE 😝☄️",
-    "✨☀️ tmx SUPER MEGA POWER WAVE TSUNAMI BLAST ACTIVATED ACROSS THE ENTIRE SERVER DIMENSION ✨☀️",
-    toxicMsg  
-}
-
-task.spawn(function()
-    local targetGroupIndex = 1
-
-    while true do
-        if isSpamming then
-            local customMsgText = CustomMsgBox.Text
-            local customDelay = tonumber(DelayBox.Text) or (isBurstMode and 0.2 or 2.4)
-            
-            local tList = {}
-            for _, box in ipairs(TargetBoxes) do
-                local text = string.match(box.Text, "^%s*(.-)%s*$")
-                if text and text ~= "" then
-                    table.insert(tList, text)
-                end
-            end
-            
-            local targetGroups = {}
-            if #tList > 0 then
-                for i = 1, #tList, 2 do
-                    if tList[i+1] then
-                        table.insert(targetGroups, "[" .. tList[i] .. "], [" .. tList[i+1] .. "]")
-                    else
-                        table.insert(targetGroups, "[" .. tList[i] .. "]")
-                    end
-                end
-            end
-            
-            for _, msg in ipairs(messages) do
-                if not isSpamming then break end
-                
-                local targetFormatted = ""
-                if #targetGroups > 0 then
-                    if targetGroupIndex > #targetGroups then
-                        targetGroupIndex = 1
-                    end
-                    targetFormatted = targetGroups[targetGroupIndex]
-                    targetGroupIndex = targetGroupIndex + 1
-                end
-                
-                local selectedPattern = patterns[math.random(1, #patterns)]
-                
-                local coreMsg = msg
-                if customMsgText ~= "" then
-                    coreMsg = customMsgText .. " " .. msg
-                end
-                
-                if targetFormatted ~= "" then
-                    coreMsg = targetFormatted .. " " .. coreMsg
-                end
-                
-                local finalMessage = selectedPattern .. "\n" .. coreMsg .. "\n" .. selectedPattern
-                
-                if #finalMessage > 195 then
-                    local allowedLen = math.floor((190 - #coreMsg) / 2)
-                    if allowedLen > 2 then
-                        local shortPat = string.sub(selectedPattern, 1, allowedLen)
-                        finalMessage = shortPat .. "\n" .. coreMsg .. "\n" .. shortPat
-                    else
-                        finalMessage = string.sub(coreMsg, 1, 190)
-                    end
-                end
-                local chatEvent = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
-                local textChannel = game:GetService("TextChatService").TextChannels:FindFirstChild("RBXGeneral")
-                
-                if chatEvent and chatEvent:FindFirstChild("SayMessageRequest") then
-                    -- Chat sending disabled in this cleaned GUI-only version.
-                elseif textChannel then
-                    -- Chat sending disabled in this cleaned GUI-only version.
-                end
-                
-                sentCount = sentCount + 1
-                
-                if isBurstMode then
-                    burstCount = burstCount + 1
-                    if burstCount >= 7 then
-                        StatusLabel.Text = "Status: Cooldown ⏳ (Resting 5s)"
-                        StatusLabel.TextColor3 = Color3.fromRGB(250, 204, 21) 
-                        task.wait(5)
-                        burstCount = 0 
-                        if isSpamming then
-                            StatusLabel.Text = "Status: Running 🟢 (Burst)"
-                            StatusLabel.TextColor3 = Color3.fromRGB(74, 222, 128)
-                        end
-                    else
-                        task.wait(customDelay)
-                    end
-                else
-                    task.wait(customDelay)
-                end
-            end
-        else
-            task.wait(0.5)
-        end
+        PreviewLabel.Text = "Preview: stopped (nothing was sent)"
     end
 end)
