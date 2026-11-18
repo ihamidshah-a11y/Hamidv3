@@ -119,7 +119,7 @@ local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Size = UDim2.new(1, 0, 0, 35)
 TitleLabel.BackgroundColor3 = Color3.fromRGB(25, 10, 15)
 TitleLabel.Font = Enum.Font.GothamBold
-TitleLabel.Text = " 🔥 HAMID SPAMMER V2 "
+TitleLabel.Text = " 🔥 HAMID MESSAGE TESTER V2 "
 TitleLabel.TextColor3 = Color3.fromRGB(255, 150, 150)
 TitleLabel.TextSize = 14
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Center
@@ -212,7 +212,7 @@ TargetLabel.Size = UDim2.new(0, 440, 0, 20)
 TargetLabel.Position = UDim2.new(0, 20, 0, 70)
 TargetLabel.BackgroundTransparency = 1
 TargetLabel.Font = Enum.Font.GothamSemibold
-TargetLabel.Text = "Targets List (10 Slots - 2 Columns):"
+TargetLabel.Text = "Target notes (preview only):"
 TargetLabel.TextColor3 = Color3.fromRGB(255, 150, 150)
 TargetLabel.TextSize = 13
 TargetLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -285,7 +285,7 @@ CustomMsgBox.Position = UDim2.new(0, 20, 0, 245)
 CustomMsgBox.BackgroundColor3 = Color3.fromRGB(35, 15, 20)
 CustomMsgBox.BorderSizePixel = 0
 CustomMsgBox.Font = Enum.Font.Gotham
-CustomMsgBox.PlaceholderText = "Type message here to add..."
+CustomMsgBox.PlaceholderText = "Type a message to preview..."
 CustomMsgBox.Text = ""
 CustomMsgBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 CustomMsgBox.TextSize = 13
@@ -359,9 +359,9 @@ addPopAnimation(ModeBtn)
 ModeBtn.MouseButton1Click:Connect(function()
     isBurstMode = not isBurstMode
     if isBurstMode then
-        ModeBtn.Text = "MODE: BURST 🔥"
+        ModeBtn.Text = "MODE: FAST PREVIEW ⚡"
         ModeBtn.BackgroundColor3 = Color3.fromRGB(150, 20, 180) 
-        DelayBox.Text = "0.2" 
+        DelayBox.Text = "0.5" 
     else
         ModeBtn.Text = "MODE: NORMAL 🐢"
         ModeBtn.BackgroundColor3 = Color3.fromRGB(59, 130, 246)
@@ -409,8 +409,6 @@ end)
 local isPreviewRunning = false
 local previewCount = 0
 local previewMessages = {
-    "HAMID V2 BY HAMIDHERE",
-    "Custom message preview",
     "Preview is running locally",
     "Press STOP to pause the preview"
 }
@@ -421,7 +419,7 @@ PreviewLabel.Position = UDim2.new(0, 20, 0, 450)
 PreviewLabel.BackgroundColor3 = Color3.fromRGB(35, 15, 20)
 PreviewLabel.BorderSizePixel = 0
 PreviewLabel.Font = Enum.Font.Gotham
-PreviewLabel.Text = "Preview: waiting"
+PreviewLabel.Text = "Preview only — no chat messages are sent"
 PreviewLabel.TextColor3 = Color3.fromRGB(255, 210, 210)
 PreviewLabel.TextSize = 12
 PreviewLabel.TextWrapped = true
@@ -443,19 +441,20 @@ ToggleBtn.MouseButton1Click:Connect(function()
         task.spawn(function()
             while isPreviewRunning do
                 previewCount += 1
-                local baseMessage = previewMessages[((previewCount - 1) % #previewMessages) + 1]
                 local customText = string.match(CustomMsgBox.Text, "^%s*(.-)%s*$")
                 if customText and customText ~= "" then
-                    PreviewLabel.Text = "Preview " .. previewCount .. ": " .. customText .. " | " .. baseMessage
+                    PreviewLabel.Text = "Preview " .. previewCount .. ": " .. customText
                 else
-                    PreviewLabel.Text = "Preview " .. previewCount .. ": " .. baseMessage
+                    local statusText = previewMessages[((previewCount - 1) % #previewMessages) + 1]
+                    PreviewLabel.Text = "Preview " .. previewCount .. ": " .. statusText
                 end
 
-                local delaySeconds = tonumber(DelayBox.Text) or 2.4
-                delaySeconds = math.clamp(delaySeconds, 0.5, 30)
-                if isBurstMode then
-                    delaySeconds = math.max(delaySeconds, 1)
+                local delaySeconds = tonumber(DelayBox.Text)
+                if not delaySeconds then
+                    delaySeconds = 2.4
+                    DelayBox.Text = "2.4"
                 end
+                delaySeconds = math.clamp(delaySeconds, 0.5, 30)
                 task.wait(delaySeconds)
             end
         end)
@@ -464,6 +463,6 @@ ToggleBtn.MouseButton1Click:Connect(function()
         ToggleBtn.BackgroundColor3 = Color3.fromRGB(220, 20, 60)
         StatusLabel.Text = "Status: Stopped 🔴"
         StatusLabel.TextColor3 = Color3.fromRGB(239, 68, 68)
-        PreviewLabel.Text = "Preview: stopped (nothing was sent)"
+        PreviewLabel.Text = "Preview stopped — nothing was sent"
     end
 end)
